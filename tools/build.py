@@ -138,6 +138,8 @@ def init_options():
         action='store', default=set(), type=lambda x: set(x.split(',')),
         help='Specify the path of modules.json files which should be processed '
              '(format: path1,path2,...)')
+    parser.add_argument('--generate-module',
+        help='Root directory of c api sources.')
 
     parser.add_argument('--jerry-cmake-param',
         action='append', default=[],
@@ -440,6 +442,13 @@ if __name__ == '__main__':
     if not options.no_init_submodule:
         print_progress('Initialize submodule')
         init_submodule()
+
+    if options.generate_module:
+        from iotjs_module_generator import generate_module
+        mod_path, mod_name = generate_module(options.generate_module)
+
+        options.external_modules.add(mod_path)
+        options.cmake_param.append('-DENABLE_MODULE_%s=ON' % mod_name.upper())
 
     build_iotjs(options)
 

@@ -7,6 +7,7 @@
 /src/iotjs_string_ext.inl.h
 /src/iotjs_module_inl.h
 /test/tmp/*
+/tools/generator_output
 eslint.log
 
 # IDE related files
