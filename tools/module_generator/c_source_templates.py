@@ -159,11 +159,9 @@ JS_SET_TYPEDARRAY = '''
 JS_TO_RECORD = '''
   // create a record from a jerry_value_t
   void* {NAME}_void_ptr;
-  const jerry_object_native_info_t* {NAME}_type_ptr;
-  bool {NAME}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{NAME}_void_ptr, &{NAME}_type_ptr);
+  bool {NAME}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{NAME}_void_ptr, &{RECORD}_type_info_static);
 
-  if (!{NAME}_has_ptr ||
-      ({NAME}_type_ptr != &{RECORD}_type_info && {NAME}_type_ptr != &{RECORD}_type_info_static)) {{
+  if (!{NAME}_has_ptr) {{
     char const *msg = "Failed to get native {TYPE} pointer";
     return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *)msg);
   }}
@@ -175,11 +173,9 @@ JS_TO_RECORD = '''
 JS_SET_RECORD = '''
   // set the value of {NAME}
   void* {RECORD}_void_ptr;
-  const jerry_object_native_info_t* {RECORD}_type_ptr;
-  bool {RECORD}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{RECORD}_void_ptr, &{RECORD}_type_ptr);
+  bool {RECORD}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{RECORD}_void_ptr, &{RECORD}_type_info_static);
 
-  if (!{RECORD}_has_ptr ||
-      ({RECORD}_type_ptr != &{RECORD}_type_info && {RECORD}_type_ptr != &{RECORD}_type_info_static)) {{
+  if (!{RECORD}_has_ptr) {{
     char const *msg = "Failed to get native {RECORD} pointer";
     return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *)msg);
   }}
@@ -191,11 +187,9 @@ JS_SET_RECORD = '''
 JS_SET_CONST_RECORD = '''
   // set the value of {NAME}
   void* {RECORD}_void_ptr;
-  const jerry_object_native_info_t* {RECORD}_type_ptr;
-  bool {RECORD}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{RECORD}_void_ptr, &{RECORD}_type_ptr);
+  bool {RECORD}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{RECORD}_void_ptr, &{RECORD}_type_info_static);
 
-  if (!{RECORD}_has_ptr ||
-      ({RECORD}_type_ptr != &{RECORD}_type_info && {RECORD}_type_ptr != &{RECORD}_type_info_static)) {{
+  if (!{RECORD}_has_ptr) {{
     char const *msg = "Failed to get native {RECORD} pointer";
     return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *)msg);
   }}
@@ -207,11 +201,9 @@ JS_SET_CONST_RECORD = '''
 JS_TO_RECORD_PTR = '''
   // create a record pointer from a jerry_value_t
   void* {NAME}_void_ptr;
-  const jerry_object_native_info_t* {NAME}_type_ptr;
-  bool {NAME}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{NAME}_void_ptr, &{NAME}_type_ptr);
+  bool {NAME}_has_ptr = jerry_get_object_native_pointer({JVAL}, &{NAME}_void_ptr, &{RECORD}_type_info_static);
 
-  if (!{NAME}_has_ptr ||
-      ({NAME}_type_ptr != &{RECORD}_type_info && {NAME}_type_ptr != &{RECORD}_type_info_static)) {{
+  if (!{NAME}_has_ptr) {{
     char const *msg = "Failed to get native {TYPE} pointer";
     return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *)msg);
   }}
@@ -368,11 +360,9 @@ jerry_value_t {RECORD}_{NAME} (const jerry_value_t function_obj,
                                const jerry_length_t args_cnt)
 {{
   void* void_ptr;
-  const jerry_object_native_info_t* type_ptr;
-  bool has_ptr = jerry_get_object_native_pointer(this_val, &void_ptr, &type_ptr);
+  bool has_ptr = jerry_get_object_native_pointer(this_val, &void_ptr, &{RECORD}_type_info_static);
 
-  if (!has_ptr ||
-      (type_ptr != &{RECORD}_type_info && type_ptr != &{RECORD}_type_info_static)) {{
+  if (!has_ptr) {{
     char const *msg = "Failed to get native {RECORD} pointer";
     return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *)msg);
   }}

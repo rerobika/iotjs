@@ -20,12 +20,13 @@ import sys
 from common_py import path
 from common_py.system.filesystem import FileSystem as fs
 
+from module_generator.definiton_generator import DefinitonGenerator
 from module_generator.source_generator import CSourceGenerator, \
     CppSourceGenerator
 from module_generator.clang_translation_unit_visitor import ClangTUVisitor
 
 
-def generate_c_source(header, api_headers, dirname, args):
+def generate_c_source(header, def_gen, api_headers, dirname, args):
 
     visit_args = []
     if args.define:
@@ -45,9 +46,9 @@ def generate_c_source(header, api_headers, dirname, args):
         visitor.check(visitor)
 
     if args.lang == 'c':
-        generator = CSourceGenerator()
+        generator = CSourceGenerator(def_gen)
     elif args.lang == 'c++':
-        generator = CppSourceGenerator()
+        generator = CppSourceGenerator(def_gen)
 
     generated_source = [INCLUDE.format(HEADER=dirname + '_js_binding.h')]
 
@@ -145,7 +146,11 @@ def generate_module(args):
     with open(header_file, 'w') as h:
         h.write(header_text)
 
-    c_file = generate_c_source(header_file, api_headers, dirname, args)
+    gen_file_path = fs.join(src_dir, dirname + '_js_binding.d.ts')
+
+    def_gen = DefinitonGenerator(gen_file_path if args.definition_file else '', dirname)
+
+    c_file = generate_c_source(header_file, def_gen, api_headers, dirname, args)
 
     extension = 'cpp' if args.lang == 'c++' else 'c'
     with open(fs.join(src_dir, dirname + '_js_binding.' + extension), 'w') as c:
@@ -188,6 +193,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--out-dir', help='Output directory for the module. ' +
                         '(default: tools/module_generator/output)')
+
+    parser.add_argument('--definition-file', action='store_true', default=False,
+                        help='Generate definiton file for the module ')
 
     parser.add_argument('--off', choices=['functions', 'variables', 'enums',
                                           'macros', 'records'],

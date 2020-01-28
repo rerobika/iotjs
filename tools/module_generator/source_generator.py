@@ -18,7 +18,7 @@ import c_source_templates as c
 import cpp_source_templates as cpp
 
 class CSourceGenerator(object):
-    def __init__(self):
+    def __init__(self, def_gen):
         self.function_names = []
         self.record_names = []
         self.variable_names = []
@@ -30,6 +30,7 @@ class CSourceGenerator(object):
         self.init_func_body = []
         self.global_records = []
         self.global_const_records = []
+        self.def_gen = def_gen
 
     @property
     def ns_name(self):
@@ -94,11 +95,11 @@ class CSourceGenerator(object):
 
     def js_to_record(self, _type, name, jval, record):
         return c.JS_TO_RECORD.format(TYPE=_type, NAME=name, JVAL=jval,
-                                     RECORD=record)
+                                     RECORD=record.split(' ')[-1])
 
     def js_set_record(self, _type, name, jval, record):
         return c.JS_SET_RECORD.format(TYPE=_type, NAME=name, JVAL=jval,
-                                      RECORD=record)
+                                      RECORD=record.split(' ')[-1])
 
     def js_set_const_record(self, _type, name, jval, record):
         return c.JS_SET_CONST_RECORD.format(TYPE=_type, NAME=name, JVAL=jval,
@@ -139,6 +140,7 @@ class CSourceGenerator(object):
                 return self.js_to_record_ptr(pointee.name, name, jval, record)
         elif c_type.is_record():
             record = c_type.get_as_record_decl().ns_name
+            print(c_type.name, name, record)
             return self.js_to_record(c_type.name, name, jval, record)
 
         return self.js_to_unsupported(c_type.name, name)
@@ -265,7 +267,7 @@ class CSourceGenerator(object):
         return c.JS_REGIST_MEMBER.format(RECORD=record, NAME=name)
 
     def js_regist_record(self, name, record, ref, object):
-        return c.JS_REGIST_RECORD.format(NAME=name, RECORD=record, REF=ref,
+        return c.JS_REGIST_RECORD.format(NAME=name, RECORD=record.split(' ')[-1], REF=ref,
                                          OBJECT=object)
 
     def js_regist_const_member(self, name):
@@ -377,6 +379,8 @@ class CSourceGenerator(object):
 
     def create_record(self, record):
         name = record.name
+        self.def_gen.emit_record(record)
+
         type_name = record.type.name
         self.record_names.append(name)
         result = [self.js_record_destructor(type_name, name)]
@@ -500,6 +504,7 @@ class CSourceGenerator(object):
         return result, buff, callback
 
     def create_ext_function(self, function):
+        self.def_gen.emit_ext_function(function)
         self.function_names.append(function.name)
         funcname = function.name
         params = function.params
@@ -546,9 +551,11 @@ class CSourceGenerator(object):
 
     def create_getter_setter(self, var):
         if var.type.is_const():
+            self.def_gen.emit_const_variable(var)
             self.constant_variables.append(var)
             return ''
         elif var.type.get_array_type().is_number():
+            self.def_gen.emit_number_array(var)
             self.number_arrays.append(var)
             return ''
 
@@ -557,6 +564,7 @@ class CSourceGenerator(object):
 
         if var.type.is_record():
             record = var.type.get_as_record_decl().ns_name
+            self.def_gen.emit_global_record(var.name, record)
             self.global_records.append((var.name, record))
             getter = self.js_record_getter(ns_name, '')
             if var.type.has_const_member():
@@ -565,6 +573,7 @@ class CSourceGenerator(object):
         else:
             get_result = self.c_to_js(var.type, scope_name, 'ret_val')
             getter = self.js_ext_func(ns_name + '_getter', get_result)
+            self.def_gen.emit_global_variable(var)
 
         self.variable_names.append(var.name)
         set_result = self.js_check_type(var.type, 'args_p[0]',
@@ -666,12 +675,14 @@ class CSourceGenerator(object):
                                                               var.name))
 
         for enum in self.enums:
+            self.def_gen.emit_enum(enum)
             name = self.ns_name + enum
             ref = self.scope_name + enum
             self.init_func_body.append(self.init_regist_enum(name, object, ref,
                                                              enum))
 
         for macro in self.macros:
+            self.def_gen.emit_macro(macro)
             name = macro.name
             jval = '{}_js'.format(name)
             if macro.is_char():
@@ -706,8 +717,8 @@ class CSourceGenerator(object):
 
 
 class CppSourceGenerator(CSourceGenerator):
-    def __init__(self):
-        CSourceGenerator.__init__(self)
+    def __init__(self, def_gen):
+        CSourceGenerator.__init__(self, def_gen)
         self.class_names = []
 
     def js_to_string(self, _type, name, jval):
